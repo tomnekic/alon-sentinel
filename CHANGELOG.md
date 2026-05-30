@@ -53,4 +53,4 @@ Initial public release.
 
 ---
 
-[1.0.0]: https://github.com/Nekic9/alon_systems/releases/tag/v1.0.0
+[1.0.0]: https://github.com/tomnekic/alon-sentinel/releases/tag/v1.0.0
