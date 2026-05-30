@@ -1,0 +1,18 @@
+# Build output
+/dist/
+
+# Dependencies
+/node_modules/
+
+# Local environment and secrets
+/.env
+/.env.*
+!/.env.example
+
+# Local tooling
+/.idea/
+/.vscode/
+
+# OS noise
+.DS_Store
+Thumbs.db

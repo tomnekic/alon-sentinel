@@ -1,0 +1,6 @@
+target/
+target_codex/
+target_codex_check/
+logs/
+.env
+.git

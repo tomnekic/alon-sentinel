@@ -1,0 +1,42 @@
+
++======================================================================+
+|  Scenario: 10000 monitors / fail (storm)                            |
+|  Window: 2722s  Monitors: 10000  Interval: 60s                      |
++======================================================================+
+
+  Metric                            Value
+  --------------------------------  --------------------
+  Checks completed                  452587
+  Expected checks                   453666
+  Requested monitors                10000
+  Measured monitors                 10000
+  Missed checks                     1079  (0.2%)
+  Open incidents                    10000
+  Incidents opened                  0
+  Incident rate                     0.0/min
+  Duplicate incidents               0  (should be 0)
+  DB writes                         452587  (166.3/sec)
+  DB size (end)                     149.0 MiB  (+118.3 MiB)
+  Worker errors                     0
+  Raw samples CSV                   results/scale_10000-monitors-fail-storm_20260530_141940.samples.csv
+
+  Component                         CPU avg/max         RAM avg/max       
+  --------------------------------  ------------------  ------------------
+  API                               0.0% / 0.02%        47.0 / 47 MiB     
+  Worker                            14.0% / 54.62%      24.2 / 27 MiB     
+  Postgres                          71.1% / 221.73%     246.1 / 269 MiB   
+  App subtotal                      14.0% / 54.62%      71.2 / 74 MiB     
+  Full stack                        85.1% / 258.12%     317.3 / 337 MiB   
+
+  Environment                       Value
+  --------------------------------  --------------------
+  Host CPU                          AMD EPYC-Genoa Processor
+  Host CPU count                    4
+  Host RAM                          7746 MiB
+  Docker server                     29.5.2
+  Docker Compose                    5.1.4
+  Postgres version                  16.14
+  API image/id                      benchmark-alon-api (10f34d71194a)
+  Worker image/id                   benchmark-alon-worker (8bc2204fc774)
+  Postgres image/id                 postgres:16-alpine (a8301b5ca07b)
+

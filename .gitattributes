@@ -1,0 +1,7 @@
+# Normalize all text files to LF in the repository.
+# This project targets Linux (Docker, CI) so LF is the canonical line ending.
+* text=auto eol=lf
+
+# Windows batch/cmd files must keep CRLF or they break on Windows.
+*.bat text eol=crlf
+*.cmd text eol=crlf

@@ -1,0 +1,13 @@
+demo.alon.systems {
+    reverse_proxy admin:80
+}
+
+api.demo.alon.systems {
+    handle /metrics {
+        respond 404
+    }
+
+    handle {
+        reverse_proxy api:3000
+    }
+}

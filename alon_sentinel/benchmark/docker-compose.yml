@@ -1,0 +1,17 @@
+services:
+  target-service:
+    build:
+      context: ./target-service
+    ports:
+      - "8088:8088"
+
+  # Run a k6 script against the locally running Alon instance.
+  # Usage: docker compose run --rm k6 run - < k6/<script>.js
+  k6:
+    image: grafana/k6
+    network_mode: host
+    volumes:
+      - ./k6:/scripts
+    profiles:
+      - k6
+    entrypoint: ["k6"]

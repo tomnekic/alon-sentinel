@@ -1,0 +1,123 @@
+services:
+
+  # ── Database (Alon only) ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       alon_bench_db
+      POSTGRES_USER:     alon
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-benchpw}
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U alon -d alon_bench_db"]
+      interval: 5s
+      timeout:  5s
+      retries:  10
+
+  # ── One-shot init (migrations + RBAC seed) ────────────────────────────────
+  alon-init:
+    build:
+      context: ../alon_sentinel
+    command: >
+      sh -c "/usr/local/bin/migrate && /usr/local/bin/seed_admin_role_permissions && /usr/local/bin/provision_admin_user"
+    environment:
+      DATABASE_URL:                  postgresql://alon:${DB_PASSWORD:-benchpw}@postgres/alon_bench_db
+      WEBHOOK_SECRET_ENCRYPTION_KEY: ${WEBHOOK_SECRET_KEY:-6f1653057b08ef82d0f760eb3669e6ba84356d7f647f0023be5c28005c1d11d6}
+      SEED_ADMIN_EMAIL:              ${ALON_ADMIN_EMAIL:-bench@bench.local}
+      SEED_ADMIN_PASSWORD:           ${ALON_ADMIN_PASSWORD:-Bench1234!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── Alon API ───────────────────────────────────────────────────────────────
+  alon-api:
+    build:
+      context: ../alon_sentinel
+    command: /usr/local/bin/api
+    environment:
+      DATABASE_URL:                       postgresql://alon:${DB_PASSWORD:-benchpw}@postgres/alon_bench_db
+      API_BIND_ADDRESS:                   0.0.0.0:3000
+      COOKIE_SECURE:                      "false"
+      WEBHOOK_SECRET_ENCRYPTION_KEY:      ${WEBHOOK_SECRET_KEY:-6f1653057b08ef82d0f760eb3669e6ba84356d7f647f0023be5c28005c1d11d6}
+      API_DB_MAX_CONNECTIONS:             "10"
+      HTTP_MONITOR_ALLOW_PRIVATE_TARGETS: "true"
+    ports:
+      - "3100:3000"
+    depends_on:
+      alon-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # ── Alon Worker ────────────────────────────────────────────────────────────
+  alon-worker:
+    build:
+      context: ../alon_sentinel
+    command: /usr/local/bin/worker
+    environment:
+      DATABASE_URL:                       postgresql://alon:${DB_PASSWORD:-benchpw}@postgres/alon_bench_db
+      WEBHOOK_SECRET_ENCRYPTION_KEY:      ${WEBHOOK_SECRET_KEY:-6f1653057b08ef82d0f760eb3669e6ba84356d7f647f0023be5c28005c1d11d6}
+      SITE_WORKER_COUNT:                  "${ALON_WORKER_COUNT:-3}"
+      HTTP_MONITOR_ALLOW_PRIVATE_TARGETS: "true"
+    depends_on:
+      alon-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # ── Uptime Kuma v2 + SQLite ────────────────────────────────────────────────
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.3.2
+    environment:
+      UPTIME_KUMA_DB_TYPE: sqlite
+    volumes:
+      - kuma_sqlite_data:/app/data
+    ports:
+      - "3101:3001"
+    restart: unless-stopped
+
+  # ── Uptime Kuma v2 + MariaDB ───────────────────────────────────────────────
+  kuma-mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: ${KUMA_MARIADB_DATABASE:-kuma}
+      MARIADB_USER:     ${KUMA_MARIADB_USER:-kuma}
+      MARIADB_PASSWORD: ${KUMA_MARIADB_PASSWORD:-kumapw}
+      MARIADB_ROOT_PASSWORD: ${KUMA_MARIADB_ROOT_PASSWORD:-rootpw}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - kuma_mariadb_data:/var/lib/mysql
+    restart: unless-stopped
+
+  uptime-kuma-mariadb:
+    image: louislam/uptime-kuma:2.3.2
+    environment:
+      UPTIME_KUMA_DB_TYPE: mariadb
+      UPTIME_KUMA_DB_HOSTNAME: kuma-mariadb
+      UPTIME_KUMA_DB_PORT: "3306"
+      UPTIME_KUMA_DB_NAME: ${KUMA_MARIADB_DATABASE:-kuma}
+      UPTIME_KUMA_DB_USERNAME: ${KUMA_MARIADB_USER:-kuma}
+      UPTIME_KUMA_DB_PASSWORD: ${KUMA_MARIADB_PASSWORD:-kumapw}
+    volumes:
+      - kuma_mariadb_app_data:/app/data
+    ports:
+      - "3102:3001"
+    depends_on:
+      kuma-mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Shared HTTP target (both tools monitor this) ───────────────────────────
+  target:
+    build:
+      context: ../alon_sentinel/benchmark/target-service
+    ports:
+      - "8188:8088"
+    restart: unless-stopped
+
+volumes:
+  kuma_sqlite_data:
+  kuma_mariadb_data:
+  kuma_mariadb_app_data:

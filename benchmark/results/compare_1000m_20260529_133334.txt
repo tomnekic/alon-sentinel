@@ -1,0 +1,54 @@
+
+==============================================================================
+  Alon Sentinel vs Uptime Kuma variants - 1000 monitors / 30s interval      
+  Window: 1566s  Expected checks/tool: 52200                                
+==============================================================================
+
+  Workload
+  Metric                    Alon/Postgres       Kuma/SQLite         Kuma/MariaDB      
+  ------------------------  ------------------  ------------------  ------------------
+  Image                     local build         louislam/uptime-kuma:2.3.2  louislam/uptime-kuma:2.3.2
+  Checks completed          52000               52065               52057             
+  Expected checks           52200               52200               52200             
+  Missed checks             200 (0.4%)          135 (0.3%)          143 (0.3%)        
+
+  Alon component split
+  Component                 CPU avg/max         RAM avg/max       
+  ------------------------  ------------------  ------------------
+  API                       0.0% / 0%           85.0 / 85 MiB     
+  Worker                    2.9% / 42.8%        14.2 / 15 MiB     
+  Postgres                  6.9% / 90.12%       229.7 / 248 MiB   
+  App subtotal              2.9% / 42.8%        99.2 / 100 MiB    
+  Full stack                9.8% / 132.92%      328.8 / 348 MiB   
+
+  Kuma SQLite split
+  Component                 CPU avg/max         RAM avg/max       
+  ------------------------  ------------------  ------------------
+  App + SQLite              112.7% / 251.8%     1999.4 / 2096 MiB 
+  SQLite storage            N/A                 135 MiB           
+
+  Kuma MariaDB split
+  Component                 CPU avg/max         RAM avg/max       
+  ------------------------  ------------------  ------------------
+  Kuma app                  81.6% / 201.12%     1622.2 / 1677 MiB 
+  MariaDB                   21.3% / 35.73%      340.0 / 340 MiB   
+  Full stack                102.9% / 236.85%    1962.1 / 2017 MiB 
+  MariaDB storage           N/A                 48.6 MiB          
+
+  Full-stack summary
+  Metric                    Alon/Postgres       Kuma/SQLite         Kuma/MariaDB      
+  ------------------------  ------------------  ------------------  ------------------
+  CPU avg/max               9.8% / 132.92%      112.7% / 251.8%     102.9% / 236.85%  
+  RAM avg/max               328.8 / 348 MiB     1999.4 / 2096 MiB   1962.1 / 2017 MiB 
+  DB storage size           N/A                 135 MiB             48.6 MiB          
+  Open incidents            0                   N/A                 N/A               
+  Duplicate incidents       0 (want 0)          N/A                 N/A               
+  Worker errors             0                   N/A                 N/A               
+
+  Notes:
+  - App-only Alon = worker + API.
+  - Full-stack Alon = worker + API + Postgres.
+  - Alon API memory includes its configured database connection pool.
+  - Kuma/SQLite stores SQLite inside the application container; app and DB RAM cannot be split.
+  - Kuma/MariaDB full-stack = Kuma application container + MariaDB container.
+

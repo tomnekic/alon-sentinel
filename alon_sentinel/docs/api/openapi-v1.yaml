@@ -1,0 +1,590 @@
+openapi: 3.1.0
+info:
+  title: Alon Sentinel API
+  version: 1.0.0
+  summary: Stable public HTTP contract for Alon Sentinel v1.
+  description: |
+    Alon Sentinel is an API-first monitoring service. This contract mirrors
+    the Axum route surface implemented under `src/api/routes`.
+servers:
+  - url: http://127.0.0.1:3000
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: Health
+  - name: Metrics
+  - name: Auth
+  - name: Admin Auth
+  - name: Admin
+  - name: Sites
+  - name: Monitoring
+  - name: Notifications
+  - name: Status Pages
+paths:
+  /live:
+    get:
+      operationId: getLive
+      tags: [Health]
+      summary: Liveness probe
+      security: []
+      responses: { "200": { $ref: "#/components/responses/JsonOk" } }
+  /ready:
+    get:
+      operationId: getReady
+      tags: [Health]
+      summary: Readiness probe
+      security: []
+      responses: { "200": { $ref: "#/components/responses/JsonOk" } }
+  /health:
+    get:
+      operationId: getHealth
+      tags: [Health]
+      summary: Service health check
+      security: []
+      responses: { "200": { $ref: "#/components/responses/JsonOk" } }
+  /metrics:
+    get:
+      operationId: getMetrics
+      tags: [Metrics]
+      summary: Scrape Prometheus metrics
+      security: []
+      responses:
+        "200":
+          description: Prometheus exposition text
+          content:
+            text/plain:
+              schema: { type: string }
+  /v1/auth/token:
+    post:
+      operationId: issueApiToken
+      tags: [Auth]
+      summary: Issue an API client access token
+      security: []
+      requestBody: { $ref: "#/components/requestBodies/IssueToken" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" } }
+  /v1/auth/revoke:
+    post:
+      operationId: revokeApiToken
+      tags: [Auth]
+      summary: Revoke the current API access token
+      requestBody: { $ref: "#/components/requestBodies/RevokeToken" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+  /v1/admin/auth/login:
+    post:
+      operationId: issueAdminToken
+      tags: [Admin Auth]
+      summary: Issue an admin access token
+      security: []
+      requestBody: { $ref: "#/components/requestBodies/IssueAdminToken" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "429": { $ref: "#/components/responses/TooManyRequests" } }
+  /v1/admin/auth/logout:
+    post:
+      operationId: logoutAdmin
+      tags: [Admin Auth]
+      summary: Revoke the current admin access token
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" } }
+  /v1/admin/auth/me:
+    get:
+      operationId: getAdminMe
+      tags: [Admin Auth]
+      summary: Get the current admin session
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" } }
+  /v1/dashboard:
+    get:
+      operationId: getDashboard
+      tags: [Admin]
+      summary: Get global dashboard
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+  /v1/incidents:
+    get:
+      operationId: listGlobalIncidents
+      tags: [Admin]
+      summary: List global incidents
+      parameters: [ { $ref: "#/components/parameters/Cursor" }, { $ref: "#/components/parameters/Limit" }, { $ref: "#/components/parameters/IncidentStatus" } ]
+      responses: { "200": { $ref: "#/components/responses/PaginatedJsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+  /v1/admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [Admin]
+      summary: List admin users
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+    post:
+      operationId: createAdminUser
+      tags: [Admin]
+      summary: Create admin user
+      requestBody: { $ref: "#/components/requestBodies/AdminUserCreate" }
+      responses: { "201": { $ref: "#/components/responses/JsonCreated" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+  /v1/admin/users/{user_id}:
+    parameters: [ { $ref: "#/components/parameters/UserId" } ]
+    patch:
+      operationId: updateAdminUser
+      tags: [Admin]
+      summary: Update admin user
+      requestBody: { $ref: "#/components/requestBodies/AdminUserUpdate" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+    delete:
+      operationId: deleteAdminUser
+      tags: [Admin]
+      summary: Delete admin user
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/admin/roles:
+    get:
+      operationId: listRoles
+      tags: [Admin]
+      summary: List roles
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+    post:
+      operationId: createRole
+      tags: [Admin]
+      summary: Create role
+      requestBody: { $ref: "#/components/requestBodies/RoleCreate" }
+      responses: { "201": { $ref: "#/components/responses/JsonCreated" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+  /v1/admin/roles/{role_id}:
+    parameters: [ { $ref: "#/components/parameters/RoleId" } ]
+    patch:
+      operationId: updateRole
+      tags: [Admin]
+      summary: Update role
+      requestBody: { $ref: "#/components/requestBodies/RoleUpdate" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+    delete:
+      operationId: deleteRole
+      tags: [Admin]
+      summary: Delete role
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/admin/permissions:
+    get:
+      operationId: listPermissions
+      tags: [Admin]
+      summary: List permissions
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+  /v1/admin/sites/{site_id}/incidents/{incident_id}/acknowledge:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/IncidentId" } ]
+    post:
+      operationId: acknowledgeIncident
+      tags: [Admin]
+      summary: Acknowledge a site incident
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/admin/api-clients:
+    get:
+      operationId: listApiClients
+      tags: [Admin]
+      summary: List API clients
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+    post:
+      operationId: createApiClient
+      tags: [Admin]
+      summary: Create API client
+      requestBody: { $ref: "#/components/requestBodies/ApiClientCreate" }
+      responses: { "201": { $ref: "#/components/responses/JsonCreated" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+  /v1/admin/api-clients/{client_id}:
+    parameters: [ { $ref: "#/components/parameters/ClientId" } ]
+    patch:
+      operationId: updateApiClient
+      tags: [Admin]
+      summary: Update API client
+      requestBody: { $ref: "#/components/requestBodies/ApiClientUpdate" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+    delete:
+      operationId: deleteApiClient
+      tags: [Admin]
+      summary: Delete API client
+      responses: { "204": { description: API client deleted }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/admin/api-clients/{client_id}/rotate-secret:
+    parameters: [ { $ref: "#/components/parameters/ClientId" } ]
+    post:
+      operationId: rotateApiClientSecret
+      tags: [Admin]
+      summary: Rotate API client secret
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites:
+    get:
+      operationId: listSites
+      tags: [Sites]
+      summary: List sites
+      parameters: [ { $ref: "#/components/parameters/Search" }, { $ref: "#/components/parameters/Limit" }, { $ref: "#/components/parameters/Cursor" } ]
+      responses: { "200": { $ref: "#/components/responses/PaginatedJsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+    post:
+      operationId: createSite
+      tags: [Sites]
+      summary: Create site
+      requestBody: { $ref: "#/components/requestBodies/SiteCreate" }
+      responses: { "201": { $ref: "#/components/responses/JsonCreated" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "409": { $ref: "#/components/responses/Conflict" } }
+  /v1/sites/{site_id}:
+    parameters: [ { $ref: "#/components/parameters/SiteId" } ]
+    patch:
+      operationId: updateSite
+      tags: [Sites]
+      summary: Update site
+      requestBody: { $ref: "#/components/requestBodies/SiteUpdate" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+    delete:
+      operationId: deleteSite
+      tags: [Sites]
+      summary: Delete site
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/summary:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/Limit" } ]
+    get:
+      operationId: getSiteSummary
+      tags: [Sites]
+      summary: Get current site summary
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/uptime:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/UptimeWindow" } ]
+    get:
+      operationId: getSiteUptime
+      tags: [Sites]
+      summary: Get 7-day or 30-day uptime summary
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/uptime/daily:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/Days" } ]
+    get:
+      operationId: getSiteUptimeDaily
+      tags: [Sites]
+      summary: Get daily uptime buckets
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/checks:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/Limit" }, { $ref: "#/components/parameters/Cursor" }, { $ref: "#/components/parameters/Outcome" } ]
+    get:
+      operationId: listSiteChecks
+      tags: [Monitoring]
+      summary: List site check history
+      responses: { "200": { $ref: "#/components/responses/PaginatedJsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/incidents:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/Limit" }, { $ref: "#/components/parameters/Cursor" }, { $ref: "#/components/parameters/IncidentStatus" } ]
+    get:
+      operationId: listSiteIncidents
+      tags: [Monitoring]
+      summary: List site incidents
+      responses: { "200": { $ref: "#/components/responses/PaginatedJsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/notifications/deliveries:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/Limit" }, { $ref: "#/components/parameters/Cursor" }, { $ref: "#/components/parameters/DeliveryStatus" }, { $ref: "#/components/parameters/EventType" } ]
+    get:
+      operationId: listSiteNotificationDeliveries
+      tags: [Notifications]
+      summary: List site notification delivery history
+      responses: { "200": { $ref: "#/components/responses/PaginatedJsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/notifications/channels:
+    parameters: [ { $ref: "#/components/parameters/SiteId" } ]
+    get:
+      operationId: listSiteNotificationChannels
+      tags: [Notifications]
+      summary: List effective notification channels for a site
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/notifications/channels/{channel_id}:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/ChannelId" } ]
+    patch:
+      operationId: upsertSiteNotificationChannelOverride
+      tags: [Notifications]
+      summary: Upsert site notification channel override
+      requestBody: { $ref: "#/components/requestBodies/SiteNotificationChannelOverride" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+    delete:
+      operationId: deleteSiteNotificationChannelOverride
+      tags: [Notifications]
+      summary: Delete site notification channel override
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/status-page:
+    parameters: [ { $ref: "#/components/parameters/SiteId" } ]
+    get:
+      operationId: getStatusPageConfig
+      tags: [Status Pages]
+      summary: Get status page configuration
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+    put:
+      operationId: upsertStatusPageConfig
+      tags: [Status Pages]
+      summary: Create or update status page configuration
+      requestBody: { $ref: "#/components/requestBodies/StatusPageConfig" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" }, "409": { $ref: "#/components/responses/Conflict" } }
+  /v1/heartbeat/{heartbeat_token}:
+    parameters: [ { $ref: "#/components/parameters/HeartbeatToken" } ]
+    post:
+      operationId: recordHeartbeatPing
+      tags: [Monitoring]
+      summary: Record a heartbeat ping
+      security: []
+      responses: { "204": { description: Heartbeat recorded }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/notifications/channels:
+    get:
+      operationId: listNotificationChannels
+      tags: [Notifications]
+      summary: List installation notification channels
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+    post:
+      operationId: createNotificationChannel
+      tags: [Notifications]
+      summary: Create installation notification channel
+      requestBody: { $ref: "#/components/requestBodies/NotificationChannel" }
+      responses: { "201": { $ref: "#/components/responses/JsonCreated" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" } }
+  /v1/notifications/channels/{channel_id}:
+    parameters: [ { $ref: "#/components/parameters/ChannelId" } ]
+    patch:
+      operationId: updateNotificationChannel
+      tags: [Notifications]
+      summary: Update installation notification channel
+      requestBody: { $ref: "#/components/requestBodies/NotificationChannel" }
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+    delete:
+      operationId: deleteNotificationChannel
+      tags: [Notifications]
+      summary: Delete installation notification channel
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/public/status/{slug}:
+    parameters: [ { $ref: "#/components/parameters/StatusSlug" } ]
+    get:
+      operationId: getPublicStatusPage
+      tags: [Status Pages]
+      summary: Get a public status page
+      security: []
+      responses: { "200": { $ref: "#/components/responses/JsonOk" }, "404": { $ref: "#/components/responses/NotFound" } }
+  /v1/sites/{site_id}/monitoring/http:
+    parameters: [ { $ref: "#/components/parameters/SiteId" } ]
+    get: { operationId: getHttpSiteMonitor, tags: [Monitoring], summary: List HTTP monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    put: { operationId: upsertHttpSiteMonitor, tags: [Monitoring], summary: Create or update an HTTP monitor, requestBody: { $ref: "#/components/requestBodies/HttpMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableHttpSiteMonitors, tags: [Monitoring], summary: Disable all HTTP monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/http/{monitor_id}:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    patch: { operationId: updateHttpSiteMonitor, tags: [Monitoring], summary: Update a specific HTTP monitor, requestBody: { $ref: "#/components/requestBodies/HttpMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableHttpSiteMonitor, tags: [Monitoring], summary: Disable a specific HTTP monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/http/{monitor_id}/pause:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: pauseHttpSiteMonitor, tags: [Monitoring], summary: Pause a specific HTTP monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/http/{monitor_id}/resume:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: resumeHttpSiteMonitor, tags: [Monitoring], summary: Resume a specific HTTP monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/ssl:
+    parameters: [ { $ref: "#/components/parameters/SiteId" } ]
+    get: { operationId: getSslSiteMonitor, tags: [Monitoring], summary: List SSL monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    put: { operationId: upsertSslSiteMonitor, tags: [Monitoring], summary: Create or update an SSL monitor, requestBody: { $ref: "#/components/requestBodies/SslMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableSslSiteMonitors, tags: [Monitoring], summary: Disable all SSL monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/ssl/{monitor_id}:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    patch: { operationId: updateSslSiteMonitor, tags: [Monitoring], summary: Update a specific SSL monitor, requestBody: { $ref: "#/components/requestBodies/SslMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableSslSiteMonitor, tags: [Monitoring], summary: Disable a specific SSL monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/ssl/{monitor_id}/pause:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: pauseSslSiteMonitor, tags: [Monitoring], summary: Pause a specific SSL monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/ssl/{monitor_id}/resume:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: resumeSslSiteMonitor, tags: [Monitoring], summary: Resume a specific SSL monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/heartbeat:
+    parameters: [ { $ref: "#/components/parameters/SiteId" } ]
+    get: { operationId: getHeartbeatSiteMonitor, tags: [Monitoring], summary: List heartbeat monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    put: { operationId: upsertHeartbeatSiteMonitor, tags: [Monitoring], summary: Create or update a heartbeat monitor, requestBody: { $ref: "#/components/requestBodies/HeartbeatMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableHeartbeatSiteMonitors, tags: [Monitoring], summary: Disable all heartbeat monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/heartbeat/{monitor_id}:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    patch: { operationId: updateHeartbeatSiteMonitor, tags: [Monitoring], summary: Update a specific heartbeat monitor, requestBody: { $ref: "#/components/requestBodies/HeartbeatMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableHeartbeatSiteMonitor, tags: [Monitoring], summary: Disable a specific heartbeat monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/heartbeat/{monitor_id}/pause:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: pauseHeartbeatSiteMonitor, tags: [Monitoring], summary: Pause a specific heartbeat monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/heartbeat/{monitor_id}/resume:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: resumeHeartbeatSiteMonitor, tags: [Monitoring], summary: Resume a specific heartbeat monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/tcp:
+    parameters: [ { $ref: "#/components/parameters/SiteId" } ]
+    get: { operationId: getTcpSiteMonitor, tags: [Monitoring], summary: List TCP monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    put: { operationId: upsertTcpSiteMonitor, tags: [Monitoring], summary: Create or update a TCP monitor, requestBody: { $ref: "#/components/requestBodies/TcpMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableTcpSiteMonitors, tags: [Monitoring], summary: Disable all TCP monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/tcp/{monitor_id}:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    patch: { operationId: updateTcpSiteMonitor, tags: [Monitoring], summary: Update a specific TCP monitor, requestBody: { $ref: "#/components/requestBodies/TcpMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableTcpSiteMonitor, tags: [Monitoring], summary: Disable a specific TCP monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/tcp/{monitor_id}/pause:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: pauseTcpSiteMonitor, tags: [Monitoring], summary: Pause a specific TCP monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/tcp/{monitor_id}/resume:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: resumeTcpSiteMonitor, tags: [Monitoring], summary: Resume a specific TCP monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/dns:
+    parameters: [ { $ref: "#/components/parameters/SiteId" } ]
+    get: { operationId: getDnsSiteMonitor, tags: [Monitoring], summary: List DNS monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    put: { operationId: upsertDnsSiteMonitor, tags: [Monitoring], summary: Create or update a DNS monitor, requestBody: { $ref: "#/components/requestBodies/DnsMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableDnsSiteMonitors, tags: [Monitoring], summary: Disable all DNS monitors for a site, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/dns/{monitor_id}:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    patch: { operationId: updateDnsSiteMonitor, tags: [Monitoring], summary: Update a specific DNS monitor, requestBody: { $ref: "#/components/requestBodies/DnsMonitor" }, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "400": { $ref: "#/components/responses/BadRequest" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+    delete: { operationId: disableDnsSiteMonitor, tags: [Monitoring], summary: Disable a specific DNS monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/dns/{monitor_id}/pause:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: pauseDnsSiteMonitor, tags: [Monitoring], summary: Pause a specific DNS monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+  /v1/sites/{site_id}/monitoring/dns/{monitor_id}/resume:
+    parameters: [ { $ref: "#/components/parameters/SiteId" }, { $ref: "#/components/parameters/MonitorId" } ]
+    post: { operationId: resumeDnsSiteMonitor, tags: [Monitoring], summary: Resume a specific DNS monitor, responses: { "200": { $ref: "#/components/responses/JsonOk" }, "401": { $ref: "#/components/responses/Unauthorized" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: opaque }
+  headers:
+    XNextCursor:
+      description: Opaque cursor for the next page, when more results exist.
+      schema: { type: string }
+  parameters:
+    SiteId: { name: site_id, in: path, required: true, schema: { type: integer, format: int64 } }
+    MonitorId: { name: monitor_id, in: path, required: true, schema: { type: integer, format: int64 } }
+    ChannelId: { name: channel_id, in: path, required: true, schema: { type: integer, format: int64 } }
+    IncidentId: { name: incident_id, in: path, required: true, schema: { type: integer, format: int64 } }
+    UserId: { name: user_id, in: path, required: true, schema: { type: integer, format: int64 } }
+    RoleId: { name: role_id, in: path, required: true, schema: { type: integer, format: int64 } }
+    ClientId: { name: client_id, in: path, required: true, schema: { type: integer, format: int64 } }
+    HeartbeatToken: { name: heartbeat_token, in: path, required: true, schema: { type: string } }
+    StatusSlug: { name: slug, in: path, required: true, schema: { type: string } }
+    Cursor: { name: cursor, in: query, required: false, schema: { type: string } }
+    Limit: { name: limit, in: query, required: false, schema: { type: integer, minimum: 1 } }
+    Search: { name: q, in: query, required: false, schema: { type: string } }
+    Days: { name: days, in: query, required: false, schema: { type: integer, minimum: 7, maximum: 90 } }
+    UptimeWindow: { name: window, in: query, required: false, schema: { type: string, enum: [7d, 30d] } }
+    Outcome: { name: outcome, in: query, required: false, schema: { type: string, enum: [success, failure] } }
+    IncidentStatus: { name: status, in: query, required: false, schema: { type: string, enum: [open, resolved] } }
+    DeliveryStatus: { name: status, in: query, required: false, schema: { type: string, enum: [pending, delivered, failed] } }
+    EventType: { name: event_type, in: query, required: false, schema: { type: string, enum: [failure, recovery] } }
+  requestBodies:
+    IssueToken: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/IssueTokenRequest" } } } }
+    RevokeToken: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/RevokeTokenRequest" } } } }
+    IssueAdminToken: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/IssueAdminTokenRequest" } } } }
+    SiteCreate: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateSiteRequest" } } } }
+    SiteUpdate: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpdateSiteRequest" } } } }
+    AdminUserCreate: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateAdminUserRequest" } } } }
+    AdminUserUpdate: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpdateAdminUserRequest" } } } }
+    RoleCreate: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateRoleRequest" } } } }
+    RoleUpdate: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpdateRoleRequest" } } } }
+    ApiClientCreate: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateApiClientRequest" } } } }
+    ApiClientUpdate: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpdateApiClientRequest" } } } }
+    HttpMonitor: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpsertHttpSiteMonitorRequest" } } } }
+    SslMonitor: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpsertSslSiteMonitorRequest" } } } }
+    HeartbeatMonitor: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpsertHeartbeatSiteMonitorRequest" } } } }
+    TcpMonitor: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpsertTcpSiteMonitorRequest" } } } }
+    DnsMonitor: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpsertDnsSiteMonitorRequest" } } } }
+    NotificationChannel: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpsertNotificationChannelRequest" } } } }
+    SiteNotificationChannelOverride: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpsertSiteNotificationChannelOverrideRequest" } } } }
+    StatusPageConfig: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/UpsertStatusPageConfigRequest" } } } }
+  responses:
+    JsonOk:
+      description: Success
+      content: { application/json: { schema: { $ref: "#/components/schemas/JsonValue" } } }
+    JsonCreated:
+      description: Created
+      content: { application/json: { schema: { $ref: "#/components/schemas/JsonValue" } } }
+    PaginatedJsonOk:
+      description: Success
+      headers: { X-Next-Cursor: { $ref: "#/components/headers/XNextCursor" } }
+      content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/JsonValue" } } } }
+    BadRequest: { description: Bad request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+    Unauthorized: { description: Unauthorized, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+    Forbidden: { description: Forbidden, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+    NotFound: { description: Not found, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+    Conflict: { description: Conflict, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+    TooManyRequests: { description: Too many requests, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+  schemas:
+    JsonValue: {}
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties: { error: { type: string } }
+    IssueTokenRequest:
+      type: object
+      required: [client_id, client_secret]
+      properties: { client_id: { type: string }, client_secret: { type: string, writeOnly: true } }
+    RevokeTokenRequest:
+      type: object
+      required: [token]
+      properties: { token: { type: string }, revoked_reason: { type: [string, "null"] } }
+    IssueAdminTokenRequest:
+      type: object
+      required: [email, password]
+      properties: { email: { type: string, format: email }, password: { type: string, writeOnly: true } }
+    CreateSiteRequest:
+      type: object
+      required: [name, base_url]
+      properties: { name: { type: string }, base_url: { type: string } }
+    UpdateSiteRequest:
+      type: object
+      required: [name, base_url, is_active]
+      properties: { name: { type: string }, base_url: { type: string }, is_active: { type: boolean } }
+    CreateAdminUserRequest:
+      type: object
+      required: [email, display_name, password, role_keys]
+      properties: { email: { type: string, format: email }, display_name: { type: string }, password: { type: string, writeOnly: true }, is_active: { type: [boolean, "null"] }, role_keys: { type: array, items: { type: string } } }
+    UpdateAdminUserRequest:
+      type: object
+      required: [email, display_name, is_active, role_keys]
+      properties: { email: { type: string, format: email }, display_name: { type: string }, password: { type: [string, "null"], writeOnly: true }, is_active: { type: boolean }, role_keys: { type: array, items: { type: string } } }
+    CreateRoleRequest:
+      type: object
+      required: [key, name, permission_keys]
+      properties: { key: { type: string }, name: { type: string }, description: { type: [string, "null"] }, permission_keys: { type: array, items: { type: string } } }
+    UpdateRoleRequest:
+      type: object
+      required: [name, permission_keys]
+      properties: { name: { type: string }, description: { type: [string, "null"] }, permission_keys: { type: array, items: { type: string } } }
+    CreateApiClientRequest:
+      type: object
+      required: [name, client_type, scopes]
+      properties: { name: { type: string }, description: { type: [string, "null"] }, client_type: { type: string, enum: [internal_service, installation_client] }, scopes: { type: array, items: { type: string, enum: ["sites:read", "sites:write"] } } }
+    UpdateApiClientRequest:
+      type: object
+      required: [name, is_active]
+      properties: { name: { type: string }, description: { type: [string, "null"] }, is_active: { type: boolean } }
+    JsonPathValueAssertion:
+      type: object
+      required: [path, value]
+      properties: { path: { type: string }, value: {} }
+    HttpHeaderAssertion:
+      type: object
+      required: [name]
+      properties: { name: { type: string }, equals: { type: [string, "null"] }, contains: { type: [string, "null"] } }
+    UpsertHttpSiteMonitorRequest:
+      type: object
+      required: [target_url, check_interval_seconds, expected_status_code, is_active]
+      properties:
+        target_url: { type: string }
+        check_interval_seconds: { type: integer, minimum: 30 }
+        expected_status_code: { type: integer, minimum: 100, maximum: 599 }
+        body_must_contain: { type: [string, "null"] }
+        body_must_not_contain: { type: [string, "null"] }
+        body_must_contain_texts: { type: [array, "null"], items: { type: string } }
+        body_must_not_contain_texts: { type: [array, "null"], items: { type: string } }
+        json_path_exists: { type: [array, "null"], items: { type: string } }
+        json_path_equals: { type: [array, "null"], items: { $ref: "#/components/schemas/JsonPathValueAssertion" } }
+        json_path_not_equals: { type: [array, "null"], items: { $ref: "#/components/schemas/JsonPathValueAssertion" } }
+        max_response_time_ms: { type: [integer, "null"] }
+        required_header_name: { type: [string, "null"] }
+        required_header_value: { type: [string, "null"] }
+        header_assertions: { type: [array, "null"], items: { $ref: "#/components/schemas/HttpHeaderAssertion" } }
+        ssl_certificate_checks_enabled: { type: [boolean, "null"] }
+        ssl_expiry_warning_days: { type: [integer, "null"] }
+        http_check_timeout_seconds_override: { type: [integer, "null"] }
+        http_check_max_attempts_override: { type: [integer, "null"] }
+        http_check_retry_delays_ms_override: { type: [array, "null"], items: { type: integer } }
+        is_active: { type: boolean }
+    UpsertSslSiteMonitorRequest:
+      type: object
+      required: [target_url, check_interval_seconds, is_active]
+      properties: { target_url: { type: string }, check_interval_seconds: { type: integer, minimum: 30 }, ssl_expiry_warning_days: { type: [integer, "null"], minimum: 8 }, http_check_timeout_seconds_override: { type: [integer, "null"] }, http_check_max_attempts_override: { type: [integer, "null"] }, http_check_retry_delays_ms_override: { type: [array, "null"], items: { type: integer } }, is_active: { type: boolean } }
+    UpsertHeartbeatSiteMonitorRequest:
+      type: object
+      required: [check_interval_seconds, is_active]
+      properties: { check_interval_seconds: { type: integer, minimum: 30 }, heartbeat_grace_seconds: { type: [integer, "null"] }, is_active: { type: boolean } }
+    UpsertTcpSiteMonitorRequest:
+      type: object
+      required: [target_host, target_port, check_interval_seconds, is_active]
+      properties: { target_host: { type: string }, target_port: { type: integer, minimum: 1, maximum: 65535 }, check_interval_seconds: { type: integer, minimum: 30 }, max_connect_time_ms: { type: [integer, "null"] }, timeout_seconds_override: { type: [integer, "null"] }, max_attempts_override: { type: [integer, "null"] }, retry_delays_ms_override: { type: [array, "null"], items: { type: integer } }, is_active: { type: boolean } }
+    UpsertDnsSiteMonitorRequest:
+      type: object
+      required: [hostname, record_type, check_interval_seconds, is_active]
+      properties: { hostname: { type: string }, record_type: { type: string, enum: [A, AAAA, CNAME, MX, TXT, NS] }, expected_value: { type: [string, "null"] }, nameserver: { type: [string, "null"] }, check_interval_seconds: { type: integer, minimum: 30 }, timeout_seconds_override: { type: [integer, "null"] }, max_attempts_override: { type: [integer, "null"] }, retry_delays_ms_override: { type: [array, "null"], items: { type: integer } }, is_active: { type: boolean } }
+    UpsertNotificationChannelRequest:
+      type: object
+      required: [channel_type, name, destination, notify_on_failure, notify_on_recovery, is_active]
+      properties: { channel_type: { type: string, enum: [webhook, slack, discord, email] }, name: { type: string }, destination: { type: string }, webhook_secret: { type: [string, "null"], writeOnly: true }, notify_on_failure: { type: boolean }, notify_on_recovery: { type: boolean }, is_active: { type: boolean } }
+    UpsertSiteNotificationChannelOverrideRequest:
+      type: object
+      minProperties: 1
+      properties: { notify_on_failure: { type: [boolean, "null"] }, notify_on_recovery: { type: [boolean, "null"] }, is_active: { type: [boolean, "null"] } }
+    UpsertStatusPageConfigRequest:
+      type: object
+      required: [is_enabled, slug, show_monitor_details, show_uptime_percentages]
+      properties: { is_enabled: { type: boolean }, slug: { type: string, minLength: 3, maxLength: 60, pattern: "^[a-z0-9-]+$" }, page_title: { type: [string, "null"] }, show_monitor_details: { type: boolean }, show_uptime_percentages: { type: boolean } }

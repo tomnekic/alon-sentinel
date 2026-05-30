@@ -1,0 +1,41 @@
+# Environment
+.env
+
+# Rust build artifacts
+target/
+target_*/
+target-*/
+!**/target-service/
+
+# Frontend build output
+dist/
+
+# Node dependencies
+node_modules/
+
+# Log files written by the API/worker (LOG_DIR default: ./logs)
+logs/
+*.log
+
+# Benchmark run outputs — keep the directory stub, ignore result files
+benchmark/results/*
+!benchmark/results/.gitkeep
+!benchmark/results/scale_5000-monitors-ok_20260530_102907.txt
+!benchmark/results/scale_5000-monitors-ok_20260530_102907.samples.csv
+!benchmark/results/scale_10000-monitors-ok_20260530_132819.txt
+!benchmark/results/scale_10000-monitors-ok_20260530_132819.samples.csv
+!benchmark/results/scale_10000-monitors-fail-storm_20260530_141940.txt
+!benchmark/results/scale_10000-monitors-fail-storm_20260530_141940.samples.csv
+!benchmark/results/compare_1000m_20260529_133334.txt
+!benchmark/results/compare_4000m_20260530_075023.txt
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+
