@@ -52,16 +52,18 @@ CREATE DATABASE alon_sentinel_db;
 cp .env.example .env
 ```
 
-Open `.env` and set the two required values:
+Open `.env` and set the required values:
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost/alon_sentinel_db
 
 # 64 hex characters — generate with: openssl rand -hex 32
 WEBHOOK_SECRET_ENCRYPTION_KEY=your_64_hex_chars_here
+
+SEED_ADMIN_PASSWORD=a-strong-admin-password
 ```
 
-Everything else has a working default. See `.env.example` for the full reference.
+See `.env.example` for the full reference.
 
 ### 3. Run database migrations
 
@@ -78,14 +80,13 @@ This applies all pending migrations and seeds the built-in roles (`viewer`, `ope
 cargo run --bin provision_admin_user
 ```
 
-Creates or updates the admin user and prints the credentials for
-`POST /v1/admin/auth/login`. The command uses these environment variables (all optional —
-defaults are shown):
+Creates the admin user if it does not already exist and prints the credentials for
+`POST /v1/admin/auth/login`. The command uses these environment variables:
 
 | Variable | Default |
 |---|---|
 | `SEED_ADMIN_EMAIL` | `admin@localhost` |
-| `SEED_ADMIN_PASSWORD` | `change-me-now` |
+| `SEED_ADMIN_PASSWORD` | Required; no default |
 | `SEED_ADMIN_NAME` | `Sentinel Admin` |
 | `SEED_ADMIN_ROLE` | `admin` |
 

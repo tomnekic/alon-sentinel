@@ -140,11 +140,10 @@ See [`ROADMAP.md`](ROADMAP.md) for project direction.
 
 ```mermaid
 flowchart LR
-    Worker[Worker process] --> API[API server]
-    Admin[React admin UI] --> API
+    Admin[React admin UI] --> API[API server]
     Public[Public status pages] --> API
     API --> Postgres[(PostgreSQL)]
-    Worker --> Postgres
+    Worker[Worker process] --> Postgres
 ```
 
 - Rust backend on Tokio
@@ -218,6 +217,11 @@ POSTGRES_PASSWORD=a-strong-password
 
 # Generate with: openssl rand -hex 32
 WEBHOOK_SECRET_ENCRYPTION_KEY=64-lowercase-hex-chars
+
+SEED_ADMIN_PASSWORD=a-strong-admin-password
+
+# FOR LOCAL USE ONLY. Remove for every remote or HTTPS deployment.
+COOKIE_SECURE=false
 ```
 
 Start the stack:
@@ -234,7 +238,8 @@ http://localhost:8080
 ```
 
 The admin UI proxies API requests internally, so only port `8080` needs to be
-reachable for normal browser use.
+reachable for normal browser use. The default Compose ports bind to
+`127.0.0.1`; use the production reverse-proxy deployment for remote access.
 
 ---
 

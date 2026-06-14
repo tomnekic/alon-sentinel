@@ -30,7 +30,7 @@ services:
       DATABASE_URL:                  postgresql://alon:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in the root .env file}@postgres/alon_sentinel_db
       WEBHOOK_SECRET_ENCRYPTION_KEY: ${WEBHOOK_SECRET_ENCRYPTION_KEY:?WEBHOOK_SECRET_ENCRYPTION_KEY must be set in the root .env file}
       SEED_ADMIN_EMAIL:              ${SEED_ADMIN_EMAIL:-admin@localhost}
-      SEED_ADMIN_PASSWORD:           ${SEED_ADMIN_PASSWORD:-change-me-now}
+      SEED_ADMIN_PASSWORD:           ${SEED_ADMIN_PASSWORD:?SEED_ADMIN_PASSWORD must be set in the root .env file}
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,7 +44,7 @@ services:
     environment:
       DATABASE_URL:                    postgresql://alon:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in the root .env file}@postgres/alon_sentinel_db
       API_BIND_ADDRESS:                0.0.0.0:3000
-      COOKIE_SECURE:                   "${COOKIE_SECURE:-false}"
+      COOKIE_SECURE:                   "${COOKIE_SECURE:-true}"
       WEBHOOK_SECRET_ENCRYPTION_KEY:   ${WEBHOOK_SECRET_ENCRYPTION_KEY:?WEBHOOK_SECRET_ENCRYPTION_KEY must be set in the root .env file}
       API_DB_MAX_CONNECTIONS:          "40"
     healthcheck:
@@ -53,10 +53,10 @@ services:
       timeout:  3s
       retries:  10
       start_period: 5s
-    # Expose port 3000 for direct API access (curl, scripts, external clients).
-    # Remove this block if you only need the admin UI.
+    # Localhost-only direct API access (curl, scripts, local clients).
+    # Use a reverse proxy or explicitly change API_HOST_ADDRESS for remote access.
     ports:
-      - "${API_HOST_PORT:-3000}:3000"
+      - "${API_HOST_ADDRESS:-127.0.0.1}:${API_HOST_PORT:-3000}:3000"
     depends_on:
       init:
         condition: service_completed_successfully
@@ -82,7 +82,7 @@ services:
       args:
         VITE_SHOW_DEMO_ACCOUNT: ${VITE_SHOW_DEMO_ACCOUNT:-false}
     ports:
-      - "${ADMIN_HOST_PORT:-8080}:80"
+      - "${ADMIN_HOST_ADDRESS:-127.0.0.1}:${ADMIN_HOST_PORT:-8080}:80"
     depends_on:
       api:
         condition: service_healthy

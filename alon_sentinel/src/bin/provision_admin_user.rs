@@ -12,7 +12,6 @@ use alon_sentinel::{
 
 const DEFAULT_ADMIN_EMAIL: &str = "admin@localhost";
 const DEFAULT_ADMIN_NAME: &str = "Sentinel Admin";
-const DEFAULT_ADMIN_PASSWORD: &str = "change-me-now";
 const DEFAULT_ADMIN_ROLE: &str = "admin";
 
 #[tokio::main]
@@ -33,7 +32,8 @@ async fn main() -> Result<()> {
 
     let email = env_or_default("SEED_ADMIN_EMAIL", DEFAULT_ADMIN_EMAIL);
     let display_name = env_or_default("SEED_ADMIN_NAME", DEFAULT_ADMIN_NAME);
-    let password = env_or_default("SEED_ADMIN_PASSWORD", DEFAULT_ADMIN_PASSWORD);
+    let password = env::var("SEED_ADMIN_PASSWORD")
+        .map_err(|_| anyhow::anyhow!("SEED_ADMIN_PASSWORD must be set"))?;
     let role_key = env_or_default("SEED_ADMIN_ROLE", DEFAULT_ADMIN_ROLE);
 
     if password.trim().is_empty() {
