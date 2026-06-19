@@ -18,6 +18,7 @@ services:
 
   # ── One-shot initialisation (migrations + RBAC seed + admin user) ─────────
   init:
+    image: ghcr.io/tomnekic/alon-sentinel:${IMAGE_TAG:-latest}
     build:
       context: ./alon_sentinel
     command: >
@@ -38,6 +39,7 @@ services:
 
   # ── API server ─────────────────────────────────────────────────────────────
   api:
+    image: ghcr.io/tomnekic/alon-sentinel:${IMAGE_TAG:-latest}
     build:
       context: ./alon_sentinel
     command: /usr/local/bin/api
@@ -64,6 +66,7 @@ services:
 
   # ── Background worker ──────────────────────────────────────────────────────
   worker:
+    image: ghcr.io/tomnekic/alon-sentinel:${IMAGE_TAG:-latest}
     build:
       context: ./alon_sentinel
     command: /usr/local/bin/worker
@@ -77,6 +80,7 @@ services:
 
   # ── Admin UI (nginx) ───────────────────────────────────────────────────────
   admin:
+    image: ghcr.io/tomnekic/alon-sentinel-admin:${IMAGE_TAG:-latest}
     build:
       context: ./alon_sentinel_admin
       args:

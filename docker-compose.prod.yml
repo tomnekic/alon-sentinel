@@ -1,4 +1,7 @@
 # Production overlay — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# To build from source instead of pulling published images:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 #
 # DNS required before first deploy:
