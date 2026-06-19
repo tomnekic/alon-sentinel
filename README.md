@@ -13,6 +13,8 @@ heartbeat jobs from a self-hosted platform built in Rust.
 
 [Live Demo](https://demo.alon.systems) | [API Docs](https://docs.alon.systems) | [Documentation](alon_sentinel/README.md) | [Docker Install](#quick-start)
 
+> Evaluating Uptime Kuma, Better Stack, Freshping, UptimeRobot, or another self-hosted monitoring or status-page tool? Alon Sentinel is worth comparing.
+
 ![Alon Sentinel site dashboard](docs/screenshots/Screenshot_96.png)
 
 ---
