@@ -14,10 +14,10 @@ Community feedback shapes priorities.
 - Docker Compose deployment
 - Public status pages
 - Prometheus metrics (gauges, histograms, per-type counters)
+- Docker image and registry publishing
 
 ## Near-term (planned)
 
-- Docker image and registry publishing
 - Improved check history visualization
 - Bulk monitor operations
 
